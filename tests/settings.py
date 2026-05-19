@@ -116,3 +116,7 @@ Q_CLUSTER = {
 
 # Default test runner; overridden on the CLI when running with xmlrunner.
 TEST_RUNNER = "django.test.runner.DiscoverRunner"
+
+# XMLTestRunner output (xmlrunner.extra.djangotestrunner.XMLTestRunner) — picked up by SonarCloud.
+TEST_OUTPUT_DIR = os.path.join(BASE_DIR, "tests-reports")
+TEST_OUTPUT_FILE_NAME = "junit.xml"
