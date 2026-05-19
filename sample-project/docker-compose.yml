@@ -1,0 +1,41 @@
+services:
+  web:
+    build:
+      context: ..
+      dockerfile: sample-project/Dockerfile
+    image: django-q2-sample:latest
+    ports:
+      - "8000:8000"
+    volumes:
+      - sample-data:/data
+    environment: &shared-env
+      DJANGO_SETTINGS_MODULE: sample.settings
+      # Must be identical across web + worker: django-q2 signs the pickled task
+      # payload with this key, and the worker verifies it before executing.
+      DJANGO_SECRET_KEY: "sample-project-shared-secret-do-not-use-in-prod"
+      SAMPLE_DATA_DIR: /data
+      Q_CLUSTER_NAME: sample-cluster
+      Q_CLUSTER_WORKERS: "2"
+    command: ["./scripts/start-web.sh"]
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health/').read()"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+      start_period: 5s
+
+  worker:
+    image: django-q2-sample:latest
+    build:
+      context: ..
+      dockerfile: sample-project/Dockerfile
+    depends_on:
+      web:
+        condition: service_healthy
+    volumes:
+      - sample-data:/data
+    environment: *shared-env
+    command: ["./scripts/start-worker.sh"]
+
+volumes:
+  sample-data:
