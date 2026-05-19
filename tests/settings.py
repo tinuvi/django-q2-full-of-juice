@@ -4,18 +4,14 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 
 # Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/2.2/howto/deployment/checklist/
+# See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
 
-# SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = ")cqmpi+p@n&!u&fu@!m@9h&1bz9mwmstsahe)nf!ms+c$uc=x7"
 
-# SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
 ALLOWED_HOSTS = []
 
-
-# Application definition
 
 INSTALLED_APPS = (
     "django.contrib.admin",
@@ -29,7 +25,7 @@ INSTALLED_APPS = (
 )
 
 
-MIDDLEWARE_CLASSES = (
+MIDDLEWARE = (
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -37,8 +33,6 @@ MIDDLEWARE_CLASSES = (
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 )
-
-MIDDLEWARE = MIDDLEWARE_CLASSES
 
 ROOT_URLCONF = "tests.urls"
 
@@ -59,9 +53,6 @@ TEMPLATES = [
 ]
 
 
-# Database
-# https://docs.djangoproject.com/en/2.2/ref/settings/#databases
-
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.sqlite3",
@@ -69,17 +60,14 @@ DATABASES = {
     }
 }
 
+DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
-# Internationalization
-# https://docs.djangoproject.com/en/2.2/topics/i18n/
 
 LANGUAGE_CODE = "en-us"
 
 TIME_ZONE = "Europe/Amsterdam"
 
 USE_I18N = True
-
-USE_L10N = True
 
 USE_TZ = True
 
@@ -99,9 +87,6 @@ LOGGING = {
     },
 }
 
-# Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/2.2/howto/static-files/
-
 STATIC_URL = "/static/"
 
 REDIS_HOST = os.environ.get("REDIS_HOST", "redis")
@@ -109,7 +94,6 @@ REDIS_HOST = os.environ.get("REDIS_HOST", "redis")
 MONGO_HOST = os.environ.get("MONGO_HOST", "mongo")
 
 
-# Django Redis
 CACHES = {
     "default": {
         "BACKEND": "django_redis.cache.RedisCache",
@@ -121,7 +105,6 @@ CACHES = {
     }
 }
 
-# Django Q specific
 Q_CLUSTER = {
     "name": "django_q_test",
     "cpu_affinity": 1,
@@ -130,3 +113,6 @@ Q_CLUSTER = {
     "django_redis": "default",
     "redis": f"redis://{REDIS_HOST}:6379/0",
 }
+
+# Default test runner; overridden on the CLI when running with xmlrunner.
+TEST_RUNNER = "django.test.runner.DiscoverRunner"

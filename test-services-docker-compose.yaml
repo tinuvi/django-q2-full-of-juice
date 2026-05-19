@@ -32,10 +32,8 @@ services:
     networks:
       - main
 
-  django-q2:
-    build:
-      dockerfile: ./Dockerfile.dev
-      context: .
+  integration-tests:
+    build: .
     environment:
       AWS_ENDPOINT_URL: http://aws:4566
       AWS_REGION: ${AWS_REGION:-us-west-2}
@@ -48,6 +46,15 @@ services:
       - redis
       - mongo
       - aws
+    command: ["./scripts/start-tests.sh"]
+    networks:
+      - main
+
+  lint-formatter:
+    build: .
+    volumes:
+      - .:/app
+    command: ["./scripts/start-formatter-lint.sh"]
     networks:
       - main
 

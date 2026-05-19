@@ -18,7 +18,7 @@ import sys
 
 myPath = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, myPath + "/../")
-os.environ["DJANGO_SETTINGS_MODULE"] = "django_q.tests.settings"
+os.environ["DJANGO_SETTINGS_MODULE"] = "tests.settings"
 nitpick_ignore = [("py:class", "datetime")]
 
 # If extensions (or modules to document with autodoc) are in another directory,

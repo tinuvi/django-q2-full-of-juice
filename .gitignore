@@ -42,6 +42,10 @@ htmlcov/
 nosetests.xml
 coverage.xml
 *,cover
+# xmlrunner per-class reports
+TEST-*.xml
+# scripts/start-tests.sh output
+tests-reports/
 .DS_Store
 
 # Translations
@@ -59,7 +63,6 @@ target/
 
 dev-requirements.txt
 dev-requirements.in
-manage.py
 db.sqlite3
 *.ipynb
 *.rdb
