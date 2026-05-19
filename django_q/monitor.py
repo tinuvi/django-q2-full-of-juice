@@ -15,7 +15,7 @@ except core.exceptions.AppRegistryNotReady:
 from django_q.brokers import Broker, get_broker
 from django_q.conf import Conf, logger, setproctitle
 from django_q.models import Success, Task
-from django_q.signals import post_execute
+from django_q.signals import post_chain_progress, post_execute, pre_chain_progress
 from django_q.signing import SignedPackage
 from django_q.tasks import async_chain
 from django_q.utils import close_old_django_connections, get_func_repr
@@ -85,13 +85,21 @@ def save_task(task, broker: Broker):
         return
     # enqueues next in a chain
     if task.get("chain", None):
-        async_chain(
-            task["chain"],
-            group=task["group"],
-            cached=task["cached"],
-            sync=task["sync"],
-            broker=broker,
-        )
+        # Give observers a chance to set up cross-process state (e.g. restoring
+        # OpenTelemetry trace context from task["otel_carrier"]) before
+        # async_chain fires pre_enqueue for the next link, and to tear it down
+        # afterwards.
+        pre_chain_progress.send(sender="django_q", task=task)
+        try:
+            async_chain(
+                task["chain"],
+                group=task["group"],
+                cached=task["cached"],
+                sync=task["sync"],
+                broker=broker,
+            )
+        finally:
+            post_chain_progress.send(sender="django_q", task=task)
     # SAVE LIMIT > 0: Prune database, SAVE_LIMIT 0: No pruning
     if not task.get("sync", False):
         close_old_django_connections()
@@ -199,13 +207,20 @@ def save_cached(task, broker: Broker):
             broker.cache.set(group_key, group_list, timeout)
             # async_task next in a chain
             if task.get("chain", None):
-                async_chain(
-                    task["chain"],
-                    group=group,
-                    cached=task["cached"],
-                    sync=task["sync"],
-                    broker=broker,
-                )
+                # Mirror save_task: paired pre/post signals around chain
+                # progression so observers see this branch too (used by cached
+                # groups that nest a chain).
+                pre_chain_progress.send(sender="django_q", task=task)
+                try:
+                    async_chain(
+                        task["chain"],
+                        group=group,
+                        cached=task["cached"],
+                        sync=task["sync"],
+                        broker=broker,
+                    )
+                finally:
+                    post_chain_progress.send(sender="django_q", task=task)
         # save the task
         broker.cache.set(task_key, SignedPackage.dumps(task), timeout)
     except Exception:

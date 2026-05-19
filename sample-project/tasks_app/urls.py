@@ -29,4 +29,19 @@ urlpatterns = [
         views.reset_signal_counts,
         name="reset_signal_counts",
     ),
+    path(
+        "api/exception-snapshot/<str:task_id>/",
+        views.get_exception_snapshot,
+        name="get_exception_snapshot",
+    ),
+    path(
+        "api/chain-progress/",
+        views.get_chain_progress_log,
+        name="get_chain_progress_log",
+    ),
+    path(
+        "api/chain-progress/reset/",
+        views.reset_chain_progress_log,
+        name="reset_chain_progress_log",
+    ),
 ]

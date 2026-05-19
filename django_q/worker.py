@@ -1,4 +1,5 @@
 import pydoc
+import sys
 import traceback
 from multiprocessing import Value
 from multiprocessing.process import current_process
@@ -96,6 +97,7 @@ def worker(
             timer.value += 3  # Add buffer so that guard doesn't kill the process on timeout before it gets processed
 
         timeout_error = False
+        exc_info = None
         try:
             if f is None:
                 # raise a meaningfull error if task["func"] is not a valid function
@@ -106,11 +108,18 @@ def worker(
         except (Exception, TimeoutException) as e:
             if isinstance(e, TimeoutException):
                 timeout_error = True
+            # Capture the live exception triple before leaving the except block,
+            # so observers subscribed to post_execute_in_worker can call e.g.
+            # `span.record_exception(exc_info[1])` without reparsing the
+            # formatted traceback string stored on task["result"].
+            exc_info = sys.exc_info()
             result = (f"{e} : {traceback.format_exc()}", False)
             if error_reporter:
                 error_reporter.report()
             if task.get("sync", False):
-                post_execute_in_worker.send(sender="django_q", func=f, task=task)
+                post_execute_in_worker.send(
+                    sender="django_q", func=f, task=task, exc_info=exc_info
+                )
                 raise
 
         with timer.get_lock():
@@ -118,7 +127,9 @@ def worker(
             task["result"] = result[0]
             task["success"] = result[1]
             task["stopped"] = timezone.now()
-            post_execute_in_worker.send(sender="django_q", func=f, task=task)
+            post_execute_in_worker.send(
+                sender="django_q", func=f, task=task, exc_info=exc_info
+            )
             result_queue.put(task)
             if timeout_error:
                 # force destroy process due to timeout

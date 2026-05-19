@@ -425,3 +425,35 @@ def get_signal_counts(_request):
 def reset_signal_counts(_request):
     tasks_signals.reset_signal_counts()
     return JsonResponse({"reset": True, **tasks_signals.signal_counts()})
+
+
+def get_exception_snapshot(_request, task_id):
+    """Return the structured exc_info captured by post_execute_in_worker.
+
+    The snapshot is populated only when the worker passes a non-None exc_info
+    kwarg — i.e. when the task raised. For a successful task this endpoint
+    returns `{"found": False, ...}` so the E2E suite can pin both cases.
+    """
+    snapshot = tasks_signals.exception_snapshot(task_id)
+    if not snapshot:
+        return JsonResponse({"found": False, "task_id": task_id})
+    return JsonResponse({"found": True, **snapshot})
+
+
+def get_chain_progress_log(_request):
+    """Return the ordered log of pre/post_chain_progress events.
+
+    Each entry includes the signal name, the task id whose completion
+    triggered the chain progression, the group id, and the remaining chain
+    length at signal time. The E2E suite reads this to assert that pre/post
+    pairs straddle each link transition and that the remaining chain length
+    decreases monotonically.
+    """
+    return JsonResponse({"events": tasks_signals.chain_progress_log()})
+
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def reset_chain_progress_log(_request):
+    tasks_signals.reset_chain_progress_log()
+    return JsonResponse({"reset": True, "events": tasks_signals.chain_progress_log()})

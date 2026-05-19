@@ -182,6 +182,32 @@ export interface SignalCounts {
   pre_enqueue: number;
   pre_execute: number;
   post_execute: number;
+  post_execute_in_worker: number;
+  pre_chain_progress: number;
+  post_chain_progress: number;
+}
+
+export interface ExceptionSnapshot {
+  found: boolean;
+  task_id: string;
+  task_name?: string;
+  exception_type?: string;
+  exception_module?: string;
+  exception_message?: string;
+  has_traceback?: boolean;
+  exception_repr?: string;
+}
+
+export interface ChainProgressEvent {
+  signal: 'pre_chain_progress' | 'post_chain_progress';
+  task_id: string;
+  task_name: string | null;
+  group: string | null;
+  remaining_chain_length: number;
+}
+
+export interface ChainProgressLog {
+  events: ChainProgressEvent[];
 }
 
 async function getJson<T>(request: APIRequestContext, url: string, expectOk = true): Promise<T> {
@@ -220,6 +246,30 @@ export function getHookAudit(
 
 export function getSignalCounts(request: APIRequestContext): Promise<SignalCounts> {
   return getJson<SignalCounts>(request, '/api/signal-counts/');
+}
+
+export function getExceptionSnapshot(
+  request: APIRequestContext,
+  taskId: string,
+): Promise<ExceptionSnapshot> {
+  return getJson<ExceptionSnapshot>(request, `/api/exception-snapshot/${taskId}/`);
+}
+
+export function getChainProgressLog(
+  request: APIRequestContext,
+): Promise<ChainProgressLog> {
+  return getJson<ChainProgressLog>(request, '/api/chain-progress/');
+}
+
+export async function resetChainProgressLog(
+  request: APIRequestContext,
+): Promise<ChainProgressLog & { reset: boolean }> {
+  const response = await request.post('/api/chain-progress/reset/');
+  expect(
+    response.ok(),
+    `POST /api/chain-progress/reset/ failed: ${response.status()}`,
+  ).toBeTruthy();
+  return (await response.json()) as ChainProgressLog & { reset: boolean };
 }
 
 export async function deleteGroup(
