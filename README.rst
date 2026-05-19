@@ -1,7 +1,7 @@
 A multiprocessing distributed task queue for Django
 ---------------------------------------------------
 
-|image0| |image1| |downloads|
+|quality_gate| |coverage|
 
 Django Q2 is a fork of Django Q. Big thanks to Ilan Steemers for starting this project. Unfortunately, development has stalled since June 2021. Django Q2 is the new updated version of Django Q, with dependencies updates, docs updates and several bug fixes. Original repository: https://github.com/Koed00/django-q
 
@@ -244,9 +244,7 @@ Acknowledgements
 
 -  JetBrains for their `Open Source Support Program <https://www.jetbrains.com/community/opensource>`__
 
-.. |image0| image:: https://github.com/GDay/django-q2/actions/workflows/test.yml/badge.svg?branche=master
-   :target: https://github.com/GDay/django-q2/actions?query=workflow%3Atests
-.. |image1| image:: https://coveralls.io/repos/github/GDay/django-q2/badge.svg?branch=master
-   :target: https://coveralls.io/github/GDay/django-q2?branch=master
-.. |downloads| image:: https://img.shields.io/pypi/dm/django-q2
-   :target: https://img.shields.io/pypi/dm/django-q2
+.. |quality_gate| image:: https://sonarcloud.io/api/project_badges/measure?project=tinuvi_django-q2-full-of-juice&metric=alert_status
+   :target: https://sonarcloud.io/summary/new_code?id=tinuvi_django-q2-full-of-juice
+.. |coverage| image:: https://sonarcloud.io/api/project_badges/measure?project=tinuvi_django-q2-full-of-juice&metric=coverage
+   :target: https://sonarcloud.io/summary/new_code?id=tinuvi_django-q2-full-of-juice
