@@ -1,5 +1,23 @@
 # Changelog
 
+## [Unreleased]
+
+### Changed
+- Test suite migrated from `pytest` / `pytest-django` to Django's `unittest`-based runner (`manage.py test`) via `unittest-xml-reporting`.
+- Minimum supported Python bumped to **3.12**; minimum supported Django bumped to **5.0**. Older versions are no longer tested.
+- Single `Dockerfile` based on `python:3.12-slim` replaces the prior `Dockerfile` + `Dockerfile.dev` split.
+- `test-services-docker-compose.yaml` now exposes two purpose-built services: `integration-tests` (full suite + coverage) and `lint-formatter` (`ruff` + `pyrefly`).
+- All tool configuration (`ruff`, `coverage`, `pyrefly`, `isort`) consolidated into `pyproject.toml`.
+
+### Added
+- `scripts/start-tests.sh`, `scripts/start-formatter-lint.sh`, and `scripts/filter_failed_tests.py` to back the new compose services.
+- `.claude/rules/main-rules.md` documenting the SDLC.
+- Root-level `manage.py` for running `manage.py test` directly.
+
+### Removed
+- `requirements.txt`, `ruff.toml`, `tox.ini`, `pytest.ini`, `Dockerfile.dev` (configuration consolidated into `pyproject.toml` and the single `Dockerfile`).
+- `pytest`, `pytest-django`, `pytest-cov` from dev dependencies; replaced by `coverage` and `unittest-xml-reporting`.
+
 ## [v1.10.0](https://github.com/django-q2/django-q2/tree/v1.10.0) (2026-05-01)
 
 - fix: Fix incorrect signal import (#308) https://github.com/django-q2/django-q2/pull/308
