@@ -15,8 +15,9 @@ urlpatterns = [
         name="schedule_recurring",
     ),
     path("api/task/<str:task_id>/", views.get_task, name="get_task"),
-    path("api/group/<str:group_name>/", views.get_group, name="get_group"),
+    path("api/group/<str:group_name>/", views.group_view, name="group_view"),
     path("api/schedule/<int:schedule_id>/", views.get_schedule, name="get_schedule"),
+    path("api/queue-size/", views.get_queue_size, name="get_queue_size"),
     path(
         "api/hook-audit/<str:task_id>/",
         views.get_hook_audit,

@@ -69,8 +69,18 @@ TIME_ZONE = "UTC"
 Q_CLUSTER = {
     "name": os.environ.get("Q_CLUSTER_NAME", "sample-cluster"),
     "workers": int(os.environ.get("Q_CLUSTER_WORKERS", "2")),
-    "timeout": 60,
-    "retry": 90,
+    # Short timeout/retry pair keeps the E2E suite fast. Every task in the
+    # sample completes in well under 10 seconds; `per-task-timeout.spec.ts`
+    # overrides this with an explicit per-task `timeout` for the kill-path
+    # test, so a tight cluster default does not interfere with it.
+    "timeout": 10,
+    "retry": 15,
+    # `ack_failures=True` makes failed tasks ack immediately by default so
+    # most specs don't pay the retry cost. `max-attempts.spec.ts` opts back
+    # into the retry loop by passing `ack_failure=False` per-task — together
+    # with `max_attempts=3` that bounds the retry loop to ~3 × retry seconds.
+    "ack_failures": True,
+    "max_attempts": 3,
     "orm": "default",
     "sync": False,
     "catch_up": False,

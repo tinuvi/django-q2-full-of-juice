@@ -66,6 +66,11 @@ TASK_REGISTRY = {
     "concat": "tasks_app.tasks.concat",
     "slow_noop": "tasks_app.tasks.slow_noop",
     "cascade": "tasks_app.tasks.cascade",
+    # Intentionally points at a function that does not exist. The web layer
+    # accepts it (it's a registered alias), but pydoc.locate returns None in
+    # the worker, so django-q2 raises `ValueError("Function ... is not
+    # defined")` (worker.py). `broken-func.spec.ts` relies on this.
+    "missing": "tasks_app.tasks.does_not_exist",
 }
 
 HOOK_REGISTRY = {

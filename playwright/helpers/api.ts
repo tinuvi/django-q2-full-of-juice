@@ -222,6 +222,21 @@ export function getSignalCounts(request: APIRequestContext): Promise<SignalCount
   return getJson<SignalCounts>(request, '/api/signal-counts/');
 }
 
+export async function deleteGroup(
+  request: APIRequestContext,
+  groupName: string,
+  { tasks = false }: { tasks?: boolean } = {},
+): Promise<{ group: string; deleted_tasks: boolean }> {
+  const url = `/api/group/${groupName}/${tasks ? '?tasks=true' : ''}`;
+  const response = await request.delete(url);
+  expect(response.ok(), `DELETE ${url} failed: ${response.status()}`).toBeTruthy();
+  return (await response.json()) as { group: string; deleted_tasks: boolean };
+}
+
+export function getQueueSize(request: APIRequestContext): Promise<{ size: number }> {
+  return getJson<{ size: number }>(request, '/api/queue-size/');
+}
+
 export async function resetSignalCounts(
   request: APIRequestContext,
 ): Promise<SignalCounts & { reset: boolean }> {

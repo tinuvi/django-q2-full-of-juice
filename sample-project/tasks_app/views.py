@@ -21,8 +21,10 @@ from django_q.tasks import (
     async_chain,
     async_iter,
     async_task,
+    delete_group,
     fetch,
     fetch_group,
+    queue_size,
     schedule,
 )
 from tasks_app import signals as tasks_signals
@@ -354,7 +356,16 @@ def get_task(_request, task_id):
     return JsonResponse({"found": True, **_task_payload(task)})
 
 
-def get_group(_request, group_name):
+@csrf_exempt
+@require_http_methods(["GET", "DELETE"])
+def group_view(request, group_name):
+    if request.method == "DELETE":
+        # `?tasks=true` deletes the underlying Task rows; otherwise only the
+        # group label is unset (Task.group → NULL) and rows survive.
+        delete_tasks = request.GET.get("tasks", "").lower() in ("1", "true", "yes")
+        delete_group(group_name, tasks=delete_tasks)
+        return JsonResponse({"group": group_name, "deleted_tasks": delete_tasks})
+
     # fetch_group with failures=True so we can introspect both successful and
     # failed members of a chain/group/iter.
     tasks = fetch_group(group_name, failures=True) or []
@@ -370,6 +381,10 @@ def get_group(_request, group_name):
             "tasks": serialized,
         }
     )
+
+
+def get_queue_size(_request):
+    return JsonResponse({"size": queue_size()})
 
 
 def get_schedule(_request, schedule_id):
