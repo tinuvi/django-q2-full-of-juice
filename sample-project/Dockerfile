@@ -18,6 +18,10 @@ COPY django_q ./django_q
 
 RUN poetry install --no-root --only main && pip install --no-deps -e .
 
+# croniter is an *extras* dep of django-q2 (only needed when Schedule.CRON is used).
+# The sample E2E covers cron, so install it explicitly here.
+RUN pip install "croniter>=2.0.1,<3"
+
 # --- Add the sample project on top ---
 WORKDIR /app
 COPY sample-project ./

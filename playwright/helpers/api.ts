@@ -10,12 +10,18 @@ export interface EnqueueBody {
   args?: unknown[];
   kwargs?: Record<string, unknown>;
   group?: string;
+  task_name?: string;
+  hook?: string;
+  timeout?: number;
+  save?: boolean;
+  ack_failure?: boolean;
 }
 
 export interface EnqueueResponse {
   task_id: string;
   task: string;
   group: string | null;
+  task_name: string | null;
 }
 
 export async function enqueue(
@@ -58,6 +64,8 @@ export interface ScheduleOnceBody {
   kwargs?: Record<string, unknown>;
   name?: string;
   run_in_secs?: number;
+  hook?: string;
+  intended_date_kwarg?: string;
 }
 
 export async function scheduleOnce(
@@ -67,6 +75,63 @@ export async function scheduleOnce(
   const response = await request.post('/api/schedule-once/', { data: body });
   expect(response.ok(), `POST /api/schedule-once/ failed: ${response.status()}`).toBeTruthy();
   return (await response.json()) as { schedule_id: number; name: string | null; next_run: string };
+}
+
+export interface ScheduleCronBody {
+  task: string;
+  cron: string;
+  args?: unknown[];
+  kwargs?: Record<string, unknown>;
+  name?: string;
+  hook?: string;
+}
+
+export async function scheduleCron(
+  request: APIRequestContext,
+  body: ScheduleCronBody,
+): Promise<{ schedule_id: number; name: string | null; next_run: string | null; cron: string }> {
+  const response = await request.post('/api/schedule-cron/', { data: body });
+  expect(response.ok(), `POST /api/schedule-cron/ failed: ${response.status()}`).toBeTruthy();
+  return (await response.json()) as {
+    schedule_id: number;
+    name: string | null;
+    next_run: string | null;
+    cron: string;
+  };
+}
+
+export interface ScheduleRecurringBody {
+  task: string;
+  minutes: number;
+  repeats: number;
+  args?: unknown[];
+  kwargs?: Record<string, unknown>;
+  name?: string;
+  hook?: string;
+}
+
+export async function scheduleRecurring(
+  request: APIRequestContext,
+  body: ScheduleRecurringBody,
+): Promise<{
+  schedule_id: number;
+  name: string | null;
+  next_run: string;
+  minutes: number;
+  repeats: number;
+}> {
+  const response = await request.post('/api/schedule-recurring/', { data: body });
+  expect(
+    response.ok(),
+    `POST /api/schedule-recurring/ failed: ${response.status()}`,
+  ).toBeTruthy();
+  return (await response.json()) as {
+    schedule_id: number;
+    name: string | null;
+    next_run: string;
+    minutes: number;
+    repeats: number;
+  };
 }
 
 export interface TaskState {
@@ -99,6 +164,24 @@ export interface ScheduleState {
   repeats?: number;
   next_run?: string | null;
   last_task_id?: string | null;
+  cron?: string | null;
+  minutes?: number | null;
+  intended_date_kwarg?: string | null;
+}
+
+export interface HookAuditState {
+  found: boolean;
+  task_id?: string;
+  name?: string;
+  func?: string;
+  success?: boolean | null;
+  result?: unknown;
+}
+
+export interface SignalCounts {
+  pre_enqueue: number;
+  pre_execute: number;
+  post_execute: number;
 }
 
 async function getJson<T>(request: APIRequestContext, url: string, expectOk = true): Promise<T> {
@@ -126,6 +209,28 @@ export async function getSchedule(
   // assert .ok() here.
   const response = await request.get(`/api/schedule/${scheduleId}/`);
   return (await response.json()) as ScheduleState;
+}
+
+export function getHookAudit(
+  request: APIRequestContext,
+  taskId: string,
+): Promise<HookAuditState> {
+  return getJson<HookAuditState>(request, `/api/hook-audit/${taskId}/`);
+}
+
+export function getSignalCounts(request: APIRequestContext): Promise<SignalCounts> {
+  return getJson<SignalCounts>(request, '/api/signal-counts/');
+}
+
+export async function resetSignalCounts(
+  request: APIRequestContext,
+): Promise<SignalCounts & { reset: boolean }> {
+  const response = await request.post('/api/signal-counts/reset/');
+  expect(
+    response.ok(),
+    `POST /api/signal-counts/reset/ failed: ${response.status()}`,
+  ).toBeTruthy();
+  return (await response.json()) as SignalCounts & { reset: boolean };
 }
 
 interface WaitOptions {
