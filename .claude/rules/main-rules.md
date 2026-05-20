@@ -34,6 +34,7 @@ Imperative guidance for working on the project. Follow these end-to-end on every
     ```bash
     docker compose -f test-services-docker-compose.yaml run --remove-orphans --rm integration-tests
     ```
+- **Playwright E2E**: specs live under `playwright/tests/`. The runner uses a two-tier project layout (a parallel tier + a chained-serial tier) defined in `playwright/playwright.config.ts`. Before adding a new spec, read the `PARALLELISM MODEL` comment block at the top of that file — it documents which file-cache keys are global versus per-task and dictates which tier the new spec belongs in. Specs that read/reset `signal-counts` or `chain-progress-log` must be added as a new chained `serial-<name>` project; everything else stays in `parallel`.
 
 ## Lint & format
 
