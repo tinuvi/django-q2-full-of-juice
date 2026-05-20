@@ -994,6 +994,120 @@ class SignalsTests(_BrokerFixtureMixin, TransactionTestCase):
                 broker.delete_queue()
 
 
+class AttemptStampingTests(_BrokerFixtureMixin, TransactionTestCase):
+    """Verify pusher.pusher() stamps task["attempt"] from Task.attempt_count.
+
+    The pusher reads monitor.save_task's authoritative attempt_count so
+    pre_execute receivers can detect re-deliveries without a database lookup
+    of their own.
+    """
+
+    def test_pusher_stamps_attempt_one_for_first_delivery(self):
+        broker = self.broker
+        broker.list_key = "attempt_stamp_first:q"
+        broker.delete_queue()
+        try:
+            task_id = async_task("math.copysign", 1, -1, broker=broker)
+            self.assertFalse(Task.objects.filter(id=task_id).exists())
+
+            task_queue = Queue()
+            event = Event()
+            event.set()
+            pusher(task_queue, event, broker=broker)
+            task_queue.put("STOP")
+
+            queued = task_queue.get()
+            self.assertEqual(queued["id"], task_id)
+            self.assertEqual(queued["attempt"], 1)
+        finally:
+            broker.delete_queue()
+
+    def test_pusher_stamps_incremented_attempt_after_prior_run(self):
+        broker = self.broker
+        broker.list_key = "attempt_stamp_retry:q"
+        broker.delete_queue()
+        try:
+            task_id = async_task("math.copysign", 1, -1, broker=broker)
+            # Simulate that an earlier pusher+worker+monitor cycle already ran
+            # and left a Task row with attempt_count=2. The next pop should be
+            # attempt 3.
+            Task.objects.create(
+                id=task_id,
+                name=f"prior-{task_id}",
+                func="math.copysign",
+                attempt_count=2,
+                started=timezone.now(),
+                stopped=timezone.now(),
+                success=False,
+            )
+
+            task_queue = Queue()
+            event = Event()
+            event.set()
+            pusher(task_queue, event, broker=broker)
+            task_queue.put("STOP")
+
+            queued = task_queue.get()
+            self.assertEqual(queued["id"], task_id)
+            self.assertEqual(queued["attempt"], 3)
+        finally:
+            broker.delete_queue()
+
+    def test_pusher_falls_back_to_attempt_one_on_db_error(self):
+        broker = self.broker
+        broker.list_key = "attempt_stamp_dberr:q"
+        broker.delete_queue()
+        try:
+            task_id = async_task("math.copysign", 1, -1, broker=broker)
+            task_queue = Queue()
+            event = Event()
+            event.set()
+            # Patch the manager used inside pusher to raise so we can prove
+            # the pusher keeps queueing the task with a safe default rather
+            # than dropping it on the floor.
+            with patch(
+                "django_q.pusher.Task.objects.filter",
+                side_effect=RuntimeError("db down"),
+            ):
+                pusher(task_queue, event, broker=broker)
+            task_queue.put("STOP")
+
+            queued = task_queue.get()
+            self.assertEqual(queued["id"], task_id)
+            self.assertEqual(queued["attempt"], 1)
+        finally:
+            broker.delete_queue()
+
+    def test_pre_execute_receives_attempt_kwarg_via_task(self):
+        broker = self.broker
+        broker.list_key = "attempt_stamp_signal:q"
+        broker.delete_queue()
+        captured = {}
+
+        def handler(sender, task, func, **kwargs):
+            captured["attempt"] = task.get("attempt")
+            captured["task_id"] = task.get("id")
+
+        pre_execute.connect(handler)
+        try:
+            task_id = async_task("math.copysign", 1, -1, broker=broker)
+            task_queue = Queue()
+            result_queue = Queue()
+            event = Event()
+            event.set()
+            pusher(task_queue, event, broker=broker)
+            task_queue.put("STOP")
+            worker(task_queue, result_queue, Value("f", -1))
+            result_queue.put("STOP")
+            monitor(result_queue, broker)
+
+            self.assertEqual(captured["task_id"], task_id)
+            self.assertEqual(captured["attempt"], 1)
+        finally:
+            pre_execute.disconnect(handler)
+            broker.delete_queue()
+
+
 class DateUtilsTests(unittest.TestCase):
     def test_add_months(self):
         # add some months

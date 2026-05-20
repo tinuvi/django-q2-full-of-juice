@@ -30,6 +30,14 @@ executed by a worker. This signal provides two arguments:
   with a function path, this argument will be the callable function
   nonetheless.
 
+The ``task`` dictionary carries a ``task["attempt"]`` key stamped by the
+pusher: ``1`` on first delivery and ``N+1`` on each broker re-delivery (the
+pusher reads ``django_q.models.Task.attempt_count`` written by the monitor on
+the previous attempt). Receivers wanting retry-aware behavior can branch on
+``task.get("attempt", 1) > 1`` without making their own database query. The
+key defaults to ``1`` in sync mode (``Q_CLUSTER["sync"] = True``), since sync
+mode bypasses the pusher and never re-delivers.
+
 After executing a task
 """"""""""""""""""""""
 - The ``django_q.signals.post_execute_in_worker`` signal is emitted after a task

@@ -440,6 +440,27 @@ def get_exception_snapshot(_request, task_id):
     return JsonResponse({"found": True, **snapshot})
 
 
+def get_task_attempts(_request, task_id):
+    """Return the per-attempt ladder captured by pre_execute for a task.
+
+    Each pusher pass stamps ``task["attempt"]`` from the authoritative
+    ``Task.attempt_count``, so a successful task yields ``[1]`` and a forced
+    retry yields ``[1, 2, ...]`` up to ``Conf.MAX_ATTEMPTS``. The endpoint
+    returns ``{"found": False}`` for tasks that never reached pre_execute.
+    """
+    ladder = tasks_signals.task_attempt_ladder(task_id)
+    if not ladder:
+        return JsonResponse({"found": False, "task_id": task_id})
+    return JsonResponse(
+        {
+            "found": True,
+            "task_id": task_id,
+            "attempts_seen": ladder,
+            "latest": ladder[-1],
+        }
+    )
+
+
 def get_chain_progress_log(_request):
     """Return the ordered log of pre/post_chain_progress events.
 

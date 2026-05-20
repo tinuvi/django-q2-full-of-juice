@@ -210,6 +210,13 @@ export interface ChainProgressLog {
   events: ChainProgressEvent[];
 }
 
+export interface TaskAttemptLadder {
+  found: boolean;
+  task_id: string;
+  attempts_seen?: number[];
+  latest?: number;
+}
+
 async function getJson<T>(request: APIRequestContext, url: string, expectOk = true): Promise<T> {
   const response = await request.get(url);
   if (expectOk) {
@@ -259,6 +266,13 @@ export function getChainProgressLog(
   request: APIRequestContext,
 ): Promise<ChainProgressLog> {
   return getJson<ChainProgressLog>(request, '/api/chain-progress/');
+}
+
+export function getTaskAttempts(
+  request: APIRequestContext,
+  taskId: string,
+): Promise<TaskAttemptLadder> {
+  return getJson<TaskAttemptLadder>(request, `/api/task-attempts/${taskId}/`);
 }
 
 export async function resetChainProgressLog(

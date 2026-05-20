@@ -19,6 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Root-level `manage.py` for running `manage.py test` directly.
 - `exc_info` keyword argument on `post_execute_in_worker`. Carries the live `(type, value, traceback)` triple from `sys.exc_info()` when the task raised (`None` on success), so observability tools can capture structured exception data without reparsing `task["result"]`.
 - `pre_chain_progress` and `post_chain_progress` signals, fired in the monitor process around the `async_chain` call that enqueues the next link of a chain (covers both `save_task` and the cached-group path in `save_cached`). Lets observers re-attach cross-process state — e.g. an OpenTelemetry trace context restored from `task["otel_carrier"]` — so chain link N+1 sits under the same trace as link N. `post_chain_progress` fires from a `finally` block so it runs even if the inner `async_chain` raises.
+- `task["attempt"]` stamped by the pusher on each dequeue (`1` on first delivery, `N+1` on broker re-delivery). Reads the authoritative `Task.attempt_count` so `pre_execute` receivers can detect retries without making their own database query; falls back to `1` on lookup failure. Defaults to `1` in sync mode.
 
 ### Removed
 - `requirements.txt`, `ruff.toml`, `tox.ini`, `pytest.ini`, `Dockerfile.dev` (configuration consolidated into `pyproject.toml` and the single `Dockerfile`).

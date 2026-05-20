@@ -35,6 +35,11 @@ urlpatterns = [
         name="get_exception_snapshot",
     ),
     path(
+        "api/task-attempts/<str:task_id>/",
+        views.get_task_attempts,
+        name="get_task_attempts",
+    ),
+    path(
         "api/chain-progress/",
         views.get_chain_progress_log,
         name="get_chain_progress_log",

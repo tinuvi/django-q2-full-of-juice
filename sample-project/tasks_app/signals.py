@@ -56,6 +56,8 @@ EXCEPTION_KEY_PREFIX = "exception-snapshot"
 EXCEPTION_KEY_TIMEOUT = 600
 CHAIN_LOG_KEY = "chain-progress-log"
 CHAIN_LOG_TIMEOUT = 600
+ATTEMPT_KEY_PREFIX = "task-attempt-ladder"
+ATTEMPT_KEY_TIMEOUT = 600
 
 
 def _seen_key(signal_name):
@@ -100,6 +102,29 @@ def _record_exception_snapshot(task, exc_info):
     cache.set(_exception_key(task_id), snapshot, timeout=EXCEPTION_KEY_TIMEOUT)
 
 
+def _attempt_key(task_id):
+    return f"{ATTEMPT_KEY_PREFIX}:{task_id}"
+
+
+def _record_attempt(task):
+    """Append the attempt number observed in pre_execute to a per-task ladder.
+
+    The pusher stamps ``task["attempt"]`` before sending the payload to the
+    worker, so subscribers of pre_execute see the running attempt number for
+    each delivery. Recording the ladder (rather than the latest value alone)
+    lets the E2E suite assert the full sequence 1, 2, ... up to the retry
+    cap.
+    """
+    task_id = task.get("id")
+    if not task_id:
+        return
+    attempt = task.get("attempt", 1)
+    key = _attempt_key(task_id)
+    ladder = cache.get(key) or []
+    ladder.append(attempt)
+    cache.set(key, ladder, timeout=ATTEMPT_KEY_TIMEOUT)
+
+
 def _append_chain_event(signal_name, task):
     """Append an event tuple to the chain progress log.
 
@@ -126,6 +151,7 @@ def _on_pre_enqueue(sender, task, **kwargs):
 
 def _on_pre_execute(sender, func, task, **kwargs):
     _record("pre_execute", task.get("id"))
+    _record_attempt(task)
 
 
 def _on_post_execute(sender, task, **kwargs):
@@ -191,3 +217,8 @@ def chain_progress_log():
 
 def reset_chain_progress_log():
     cache.delete(CHAIN_LOG_KEY)
+
+
+def task_attempt_ladder(task_id):
+    """Return the ordered list of attempt numbers observed for a task, or []."""
+    return cache.get(_attempt_key(task_id)) or []
