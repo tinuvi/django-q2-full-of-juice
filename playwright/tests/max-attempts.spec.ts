@@ -33,8 +33,8 @@ test.describe('max_attempts retry loop', () => {
 
     // Once attempt_count >= MAX_ATTEMPTS the broker acks the OrmQ row, so
     // attempt_count should NOT climb further. Sample again after >1 retry
-    // window to prove the loop actually stopped.
-    await new Promise(resolve => setTimeout(resolve, 20_000));
+    // window (retry=15s) to prove the loop actually stopped.
+    await new Promise(resolve => setTimeout(resolve, 17_000));
     const settled = await getTask(request, enqueued.task_id);
     expect(settled.attempt_count).toBe(retried.attempt_count);
   });

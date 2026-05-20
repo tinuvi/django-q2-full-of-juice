@@ -19,6 +19,7 @@ permissions:
 
 jobs:
   publish-coverage:
+    if: github.repository == 'tinuvi/django-q2-full-of-juice'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout

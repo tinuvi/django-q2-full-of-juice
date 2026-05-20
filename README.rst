@@ -30,7 +30,7 @@ Changes compared to the original Django-Q:
 - Improved admin area
 - Fixed a lot of issues
 
-See the `changelog <https://github.com/GDay/django-q2/blob/master/CHANGELOG.md>`__ for all changes.
+See the `changelog <https://github.com/tinuvi/django-q2-full-of-juice/blob/master/CHANGELOG.md>`__ for all changes.
 
 Requirements
 ~~~~~~~~~~~~
@@ -56,7 +56,7 @@ Installation
 
 -  Install the latest version with pip::
 
-    $ pip install django-q2
+    $ pip install django-q2-full-of-juice
 
 
 -  Add `django_q` to your `INSTALLED_APPS` in your projects `settings.py`::

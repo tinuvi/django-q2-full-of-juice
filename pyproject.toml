@@ -3,20 +3,20 @@ requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.poetry]
-name = "django-q2"
+name = "django-q2-full-of-juice"
 version = "1.10.0"
 packages = [
     { include = "django_q" },
 ]
 description = "A multiprocessing distributed task queue for Django"
 authors = ["Stan Triepels <django-q2@stantriepels.com>", "Ilan Steemers <koed00@gmail.com>"]
-maintainers = ["Stan Triepels <django-q2@stantriepels.com>"]
+maintainers = ["Willian Antunes <willianantunes@users.noreply.github.com>"]
 license = "MIT"
 readme = 'README.rst'
 
-repository = "https://github.com/GDay/django-q2"
-homepage = "https://django-q2.readthedocs.org"
-documentation = "https://django-q2.readthedocs.org"
+repository = "https://github.com/tinuvi/django-q2-full-of-juice"
+homepage = "https://github.com/tinuvi/django-q2-full-of-juice"
+documentation = "https://github.com/tinuvi/django-q2-full-of-juice"
 
 keywords = ["django", "distributed", "multiprocessing", "queue", "scheduler"]
 

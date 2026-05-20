@@ -23,8 +23,10 @@ from django_q.monitor import monitor, save_task
 from django_q.pusher import pusher
 from django_q.queues import Queue
 from django_q.signals import (
+    post_chain_progress,
     post_execute,
     post_execute_in_worker,
+    pre_chain_progress,
     pre_enqueue,
     pre_execute,
 )
@@ -808,6 +810,302 @@ class SignalsTests(_BrokerFixtureMixin, TransactionTestCase):
         self.assertEqual(self.task.get("id"), task_id)
         self.assertEqual(self.task.get("result"), -1)
         post_execute_in_worker.disconnect(handler)
+
+    def test_post_execute_in_worker_exc_info_is_none_on_success(self):
+        broker = self.broker
+        broker.list_key = "post_execute_in_worker_exc_info_success:q"
+        broker.delete_queue()
+        captured = {}
+
+        def handler(sender, task, exc_info=None, **kwargs):
+            captured["exc_info"] = exc_info
+            captured["success"] = task.get("success")
+
+        post_execute_in_worker.connect(handler)
+        try:
+            async_task("math.copysign", 1, -1, broker=broker)
+            task_queue = Queue()
+            result_queue = Queue()
+            event = Event()
+            event.set()
+            pusher(task_queue, event, broker=broker)
+            task_queue.put("STOP")
+            worker(task_queue, result_queue, Value("f", -1))
+            result_queue.put("STOP")
+            monitor(result_queue, broker)
+            self.assertTrue(captured["success"])
+            self.assertIsNone(captured["exc_info"])
+        finally:
+            post_execute_in_worker.disconnect(handler)
+            broker.delete_queue()
+
+    def test_post_execute_in_worker_exc_info_carries_live_exception(self):
+        broker = self.broker
+        broker.list_key = "post_execute_in_worker_exc_info_failure:q"
+        broker.delete_queue()
+        captured = {}
+
+        def handler(sender, task, exc_info=None, **kwargs):
+            captured["exc_info"] = exc_info
+            captured["success"] = task.get("success")
+
+        post_execute_in_worker.connect(handler)
+        try:
+            async_task("tests.tasks.raise_exception", broker=broker)
+            task_queue = Queue()
+            result_queue = Queue()
+            event = Event()
+            event.set()
+            pusher(task_queue, event, broker=broker)
+            task_queue.put("STOP")
+            worker(task_queue, result_queue, Value("f", -1))
+            result_queue.put("STOP")
+            monitor(result_queue, broker)
+            self.assertFalse(captured["success"])
+            exc_info = captured["exc_info"]
+            self.assertIsNotNone(exc_info)
+            exc_type, exc_value, exc_tb = exc_info
+            self.assertIs(exc_type, TaskError)
+            self.assertIsInstance(exc_value, TaskError)
+            self.assertEqual(str(exc_value), "this is an exception!")
+            self.assertIsNotNone(exc_tb)
+        finally:
+            post_execute_in_worker.disconnect(handler)
+            broker.delete_queue()
+
+    def test_pre_post_chain_progress_signals_fire_around_async_chain(self):
+        broker = self.broker
+        broker.list_key = "chain_progress_test:q"
+        broker.delete_queue()
+        events = []
+
+        def pre_handler(sender, task, **kwargs):
+            events.append(("pre", task.get("id")))
+
+        def post_handler(sender, task, **kwargs):
+            events.append(("post", task.get("id")))
+
+        pre_chain_progress.connect(pre_handler)
+        post_chain_progress.connect(post_handler)
+        try:
+            tag = uuid()
+            task = {
+                "id": tag[1],
+                "name": tag[0],
+                "func": "math.copysign",
+                "args": (1, -1),
+                "kwargs": {},
+                "started": timezone.now(),
+                "stopped": timezone.now(),
+                "success": True,
+                "result": -1.0,
+                "chain": [("math.copysign", (1, -1))],
+                "group": "chain-progress-group",
+                "cached": False,
+                "sync": False,
+            }
+            save_task(task, broker)
+            # Order matters: pre fires before the inner async_chain runs, post
+            # fires after the synchronous async_chain call returns.
+            self.assertEqual(events, [("pre", task["id"]), ("post", task["id"])])
+        finally:
+            pre_chain_progress.disconnect(pre_handler)
+            post_chain_progress.disconnect(post_handler)
+            broker.delete_queue()
+
+    def test_chain_progress_signals_do_not_fire_without_chain(self):
+        broker = self.broker
+        broker.list_key = "chain_progress_skip_test:q"
+        broker.delete_queue()
+        fired = []
+
+        def handler(sender, task, **kwargs):
+            fired.append(task.get("id"))
+
+        pre_chain_progress.connect(handler)
+        post_chain_progress.connect(handler)
+        try:
+            tag = uuid()
+            task = {
+                "id": tag[1],
+                "name": tag[0],
+                "func": "math.copysign",
+                "args": (1, -1),
+                "kwargs": {},
+                "started": timezone.now(),
+                "stopped": timezone.now(),
+                "success": True,
+                "result": -1.0,
+                # no "chain" key
+            }
+            save_task(task, broker)
+            self.assertEqual(fired, [])
+        finally:
+            pre_chain_progress.disconnect(handler)
+            post_chain_progress.disconnect(handler)
+            broker.delete_queue()
+
+    def test_post_chain_progress_fires_even_if_async_chain_raises(self):
+        broker = self.broker
+        broker.list_key = "chain_progress_raise_test:q"
+        broker.delete_queue()
+        events = []
+
+        def pre_handler(sender, task, **kwargs):
+            events.append("pre")
+
+        def post_handler(sender, task, **kwargs):
+            events.append("post")
+
+        pre_chain_progress.connect(pre_handler)
+        post_chain_progress.connect(post_handler)
+
+        def boom_async_chain(*args, **kwargs):
+            raise RuntimeError("simulated async_chain failure")
+
+        with patch("django_q.monitor.async_chain", side_effect=boom_async_chain):
+            try:
+                tag = uuid()
+                task = {
+                    "id": tag[1],
+                    "name": tag[0],
+                    "func": "math.copysign",
+                    "args": (1, -1),
+                    "kwargs": {},
+                    "started": timezone.now(),
+                    "stopped": timezone.now(),
+                    "success": True,
+                    "result": -1.0,
+                    "chain": [("math.copysign", (1, -1))],
+                    "group": "chain-progress-raise",
+                    "cached": False,
+                    "sync": False,
+                }
+                # The chain block in save_task is outside its inner try/except,
+                # so the simulated async_chain failure propagates. The
+                # try/finally we added must still let post_chain_progress fire
+                # before the exception escapes.
+                with self.assertRaises(RuntimeError):
+                    save_task(task, broker)
+                self.assertEqual(events, ["pre", "post"])
+            finally:
+                pre_chain_progress.disconnect(pre_handler)
+                post_chain_progress.disconnect(post_handler)
+                broker.delete_queue()
+
+
+class AttemptStampingTests(_BrokerFixtureMixin, TransactionTestCase):
+    """Verify pusher.pusher() stamps task["attempt"] from Task.attempt_count.
+
+    The pusher reads monitor.save_task's authoritative attempt_count so
+    pre_execute receivers can detect re-deliveries without a database lookup
+    of their own.
+    """
+
+    def test_pusher_stamps_attempt_one_for_first_delivery(self):
+        broker = self.broker
+        broker.list_key = "attempt_stamp_first:q"
+        broker.delete_queue()
+        try:
+            task_id = async_task("math.copysign", 1, -1, broker=broker)
+            self.assertFalse(Task.objects.filter(id=task_id).exists())
+
+            task_queue = Queue()
+            event = Event()
+            event.set()
+            pusher(task_queue, event, broker=broker)
+            task_queue.put("STOP")
+
+            queued = task_queue.get()
+            self.assertEqual(queued["id"], task_id)
+            self.assertEqual(queued["attempt"], 1)
+        finally:
+            broker.delete_queue()
+
+    def test_pusher_stamps_incremented_attempt_after_prior_run(self):
+        broker = self.broker
+        broker.list_key = "attempt_stamp_retry:q"
+        broker.delete_queue()
+        try:
+            task_id = async_task("math.copysign", 1, -1, broker=broker)
+            # Simulate that an earlier pusher+worker+monitor cycle already ran
+            # and left a Task row with attempt_count=2. The next pop should be
+            # attempt 3.
+            Task.objects.create(
+                id=task_id,
+                name=f"prior-{task_id}",
+                func="math.copysign",
+                attempt_count=2,
+                started=timezone.now(),
+                stopped=timezone.now(),
+                success=False,
+            )
+
+            task_queue = Queue()
+            event = Event()
+            event.set()
+            pusher(task_queue, event, broker=broker)
+            task_queue.put("STOP")
+
+            queued = task_queue.get()
+            self.assertEqual(queued["id"], task_id)
+            self.assertEqual(queued["attempt"], 3)
+        finally:
+            broker.delete_queue()
+
+    def test_pusher_falls_back_to_attempt_one_on_db_error(self):
+        broker = self.broker
+        broker.list_key = "attempt_stamp_dberr:q"
+        broker.delete_queue()
+        try:
+            task_id = async_task("math.copysign", 1, -1, broker=broker)
+            task_queue = Queue()
+            event = Event()
+            event.set()
+            # Patch the manager used inside pusher to raise so we can prove
+            # the pusher keeps queueing the task with a safe default rather
+            # than dropping it on the floor.
+            with patch(
+                "django_q.pusher.Task.objects.filter",
+                side_effect=RuntimeError("db down"),
+            ):
+                pusher(task_queue, event, broker=broker)
+            task_queue.put("STOP")
+
+            queued = task_queue.get()
+            self.assertEqual(queued["id"], task_id)
+            self.assertEqual(queued["attempt"], 1)
+        finally:
+            broker.delete_queue()
+
+    def test_pre_execute_receives_attempt_kwarg_via_task(self):
+        broker = self.broker
+        broker.list_key = "attempt_stamp_signal:q"
+        broker.delete_queue()
+        captured = {}
+
+        def handler(sender, task, func, **kwargs):
+            captured["attempt"] = task.get("attempt")
+            captured["task_id"] = task.get("id")
+
+        pre_execute.connect(handler)
+        try:
+            task_id = async_task("math.copysign", 1, -1, broker=broker)
+            task_queue = Queue()
+            result_queue = Queue()
+            event = Event()
+            event.set()
+            pusher(task_queue, event, broker=broker)
+            task_queue.put("STOP")
+            worker(task_queue, result_queue, Value("f", -1))
+            result_queue.put("STOP")
+            monitor(result_queue, broker)
+
+            self.assertEqual(captured["task_id"], task_id)
+            self.assertEqual(captured["attempt"], 1)
+        finally:
+            pre_execute.disconnect(handler)
+            broker.delete_queue()
 
 
 class DateUtilsTests(unittest.TestCase):

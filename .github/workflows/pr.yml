@@ -24,9 +24,12 @@ jobs:
           docker compose -f test-services-docker-compose.yaml up --build --exit-code-from integration-tests integration-tests
       # Secrets are not passed to runners on PRs from forks, so SONAR_TOKEN would
       # resolve to an empty string and the scan would fail. Skip the step in that case.
+      # The github.repository guard additionally prevents downstream forks of this
+      # repo from running secret-dependent steps against this project's SonarCloud
+      # / Test PyPI targets.
       # https://docs.github.com/en/actions/security-for-github-actions/security-guides/using-secrets-in-github-actions#using-secrets-in-a-workflow
       - name: SonarQube Scan
-        if: github.event.pull_request.head.repo.full_name == github.repository
+        if: github.event.pull_request.head.repo.full_name == github.repository && github.repository == 'tinuvi/django-q2-full-of-juice'
         uses: SonarSource/sonarqube-scan-action@v8.0.0
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
@@ -37,12 +40,12 @@ jobs:
       - name: Install Poetry
         run: pip install poetry==2.4.1
       - name: Configure Test PyPI
-        if: github.event.pull_request.head.repo.full_name == github.repository
+        if: github.event.pull_request.head.repo.full_name == github.repository && github.repository == 'tinuvi/django-q2-full-of-juice'
         run: |
           poetry config repositories.testpypi https://test.pypi.org/legacy/
           poetry config pypi-token.testpypi ${{ secrets.TEST_PYPI_TOKEN }}
       - name: Publish to Test PyPI
-        if: github.event.pull_request.head.repo.full_name == github.repository
+        if: github.event.pull_request.head.repo.full_name == github.repository && github.repository == 'tinuvi/django-q2-full-of-juice'
         run: |
           cd .github/workflows
           python -c "from test_pypi_publish import publish_test_pypi; publish_test_pypi(path='${{ github.workspace }}')"

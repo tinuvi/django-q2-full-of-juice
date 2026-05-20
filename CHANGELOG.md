@@ -1,6 +1,12 @@
 # Changelog
+All notable changes to this project will be documented in this file.
 
-## [Unreleased]
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [0.1.0](https://github.com/tinuvi/django-q2-full-of-juice/tree/0.1.0) (2026-05-20)
+
+First release of the **django-q2-full-of-juice** fork. Versioning restarts at `0.1.0` to signal a clean break from the upstream `django-q2` line; the import path (`django_q`) is unchanged.
 
 ### Changed
 - Test suite migrated from `pytest` / `pytest-django` to Django's `unittest`-based runner (`manage.py test`) via `unittest-xml-reporting`.
@@ -13,10 +19,19 @@
 - `scripts/start-tests.sh`, `scripts/start-formatter-lint.sh`, and `scripts/filter_failed_tests.py` to back the new compose services.
 - `.claude/rules/main-rules.md` documenting the SDLC.
 - Root-level `manage.py` for running `manage.py test` directly.
+- `exc_info` keyword argument on `post_execute_in_worker`. Carries the live `(type, value, traceback)` triple from `sys.exc_info()` when the task raised (`None` on success), so observability tools can capture structured exception data without reparsing `task["result"]`.
+- `pre_chain_progress` and `post_chain_progress` signals, fired in the monitor process around the `async_chain` call that enqueues the next link of a chain (covers both `save_task` and the cached-group path in `save_cached`). Lets observers re-attach cross-process state — e.g. an OpenTelemetry trace context restored from `task["otel_carrier"]` — so chain link N+1 sits under the same trace as link N. `post_chain_progress` fires from a `finally` block so it runs even if the inner `async_chain` raises.
+- `task["attempt"]` stamped by the pusher on each dequeue (`1` on first delivery, `N+1` on broker re-delivery). Reads the authoritative `Task.attempt_count` so `pre_execute` receivers can detect retries without making their own database query; falls back to `1` on lookup failure. Defaults to `1` in sync mode.
 
 ### Removed
 - `requirements.txt`, `ruff.toml`, `tox.ini`, `pytest.ini`, `Dockerfile.dev` (configuration consolidated into `pyproject.toml` and the single `Dockerfile`).
 - `pytest`, `pytest-django`, `pytest-cov` from dev dependencies; replaced by `coverage` and `unittest-xml-reporting`.
+
+---
+
+## Upstream history (django-q2 ≤ 1.10.0)
+
+The entries below this divider were authored by the upstream [django-q2](https://github.com/django-q2/django-q2) project (and, earlier, [django-q](https://github.com/Koed00/django-q)). They are retained because the code they describe still ships in this fork.
 
 ## [v1.10.0](https://github.com/django-q2/django-q2/tree/v1.10.0) (2026-05-01)
 
@@ -30,7 +45,6 @@
 - Fix unbounded growth of Broker.set_stat cluster master list (#322) https://github.com/django-q2/django-q2/pull/322
 - Update Python base image to 3.9-slim-bookworm (#325) https://github.com/django-q2/django-q2/pull/325
 - feat: add ru locale and improve translations (#320) https://github.com/django-q2/django-q2/pull/320
-
 
 ## [v1.9.0](https://github.com/django-q2/django-q2/tree/v1.9.0) (2025-12-04)
 
@@ -67,7 +81,6 @@
 - Fix type check for args in scheduler.py E721 https://github.com/django-q2/django-q2/pull/233
 - Only trigger prometheus if configured https://github.com/django-q2/django-q2/pull/231
 - Fix missing ack_id when finishing task https://github.com/django-q2/django-q2/pull/224
-
 
 ## [v1.7.2](https://github.com/django-q2/django-q2/tree/v1.7.2) (2024-09-09)
 

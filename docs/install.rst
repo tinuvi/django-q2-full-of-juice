@@ -4,7 +4,7 @@ Installation
 
 -  Install the latest version with pip::
 
-    $ pip install django-q2
+    $ pip install django-q2-full-of-juice
 
 
 -  Add :mod:`django_q` to ``INSTALLED_APPS`` in your projects :file:`settings.py`::
@@ -32,7 +32,7 @@ If you have an application with django-q running right now, you can simply swap 
 
 
     $ pip uninstall django-q # you might have to uninstall django-q add-ons as well
-    $ pip install django-q2
+    $ pip install django-q2-full-of-juice
 
 
 Then migrate the database to get the latest tables/fields::
@@ -115,11 +115,11 @@ Add-ons
 -------
 - `django-q-rollbar <https://github.com/danielwelch/django-q-rollbar>`__ is a Rollbar error reporter::
 
-    $ pip install django-q2[rollbar]
+    $ pip install django-q2-full-of-juice[rollbar]
 
 - `django-q-sentry <https://github.com/danielwelch/django-q-sentry>`__ is a Sentry error reporter::
 
-    $ pip install django-q2[sentry]
+    $ pip install django-q2-full-of-juice[sentry]
 
 - `django-q-email <https://github.com/joeyespo/django-q-email>`__ is a compatible Django email backend that will automatically async queue your emails.
 
@@ -146,12 +146,12 @@ Other known issues are:
 Python
 ~~~~~~
 Current tests are performed with 3.8, 3.9, 3.10, 3.11 and 3.12
-If you do encounter any regressions with earlier versions, please submit an issue on `github <https://github.com/GDay/django-q2>`__
+If you do encounter any regressions with earlier versions, please submit an issue on `github <https://github.com/tinuvi/django-q2-full-of-juice>`__
 
 Open-source packages
 ~~~~~~~~~~~~~~~~~~~~
 Django Q2 is always tested with the latest versions of the required and optional Python packages. We try to keep the dependencies as up to date as possible.
-You can reference the `requirements <https://github.com/GDay/django-q2/blob/master/requirements.txt>`__ file to determine which versions are currently being used for tests and development.
+You can reference the `pyproject.toml <https://github.com/tinuvi/django-q2-full-of-juice/blob/master/pyproject.toml>`__ file to determine which versions are currently being used for tests and development.
 
 Django
 ~~~~~~

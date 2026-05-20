@@ -58,7 +58,10 @@ jobs:
         env:
           CI: 'true'
           SAMPLE_PROJECT_URL: http://localhost:8000
-        run: npm test -- --project=chromium
+        # Runs all configured projects (`parallel` + the chained `serial-*`
+        # tier). See the PARALLELISM MODEL block in playwright.config.ts for
+        # which spec files live in which tier.
+        run: npm test
 
       - name: Dump compose logs on failure
         if: failure()

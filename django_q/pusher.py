@@ -16,7 +16,9 @@ except core.exceptions.AppRegistryNotReady:
 
 from django_q.brokers import Broker, get_broker
 from django_q.conf import Conf, logger
+from django_q.models import Task
 from django_q.signing import BadSignature, SignedPackage
+from django_q.utils import close_old_django_connections
 
 try:
     import setproctitle
@@ -62,6 +64,22 @@ def pusher(task_queue: Queue, event: Event, broker: Broker = None):
                     Conf.CLUSTER_NAME
                 )  # save actual cluster name to orm task table
                 task["ack_id"] = ack_id
+                # Read monitor.save_task's authoritative attempt_count so
+                # pre_execute receivers can detect retries without a DB lookup.
+                close_old_django_connections()
+                try:
+                    row = (
+                        Task.objects.filter(id=task["id"])
+                        .values("attempt_count")
+                        .first()
+                    )
+                except Exception:
+                    logger.exception(
+                        "Failed to look up attempt_count for task %s",
+                        task["id"],
+                    )
+                    row = None
+                task["attempt"] = (row["attempt_count"] + 1) if row else 1
                 task_queue.put(task)
             logger.debug(
                 _("queueing from %(list_key)s") % {"list_key": broker.list_key}

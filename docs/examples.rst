@@ -389,7 +389,7 @@ Requires cache to be enabled. Save file in your Django project's root directory 
         
 .. note::
 
-    If you have an example you want to share, please submit a pull request on `github <https://github.com/GDay/django-q2/>`__.
+    If you have an example you want to share, please submit a pull request on `github <https://github.com/tinuvi/django-q2-full-of-juice/>`__.
 
 
 

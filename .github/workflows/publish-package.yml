@@ -11,6 +11,7 @@ permissions:
 
 jobs:
   publish-package:
+    if: github.repository == 'tinuvi/django-q2-full-of-juice'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -26,6 +27,12 @@ jobs:
           python -m pip install --user pipx
           python -m pipx ensurepath
           pipx install poetry==2.4.1
+      - name: Compile translation catalogs
+        run: |
+          sudo apt-get update
+          sudo apt-get -y install gettext
+          pip install django
+          cd django_q && django-admin compilemessages
       - name: Build and publish package
         run: |
           TAG_NAME=${GITHUB_REF#refs/tags/}
