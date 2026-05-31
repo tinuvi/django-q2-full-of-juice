@@ -1,0 +1,65 @@
+site_name: Django Q2 (full of juice)
+site_description: A multiprocessing distributed task queue for Django
+site_url: https://tinuvi.github.io/django-q2-full-of-juice/
+repo_url: https://github.com/tinuvi/django-q2-full-of-juice
+repo_name: tinuvi/django-q2-full-of-juice
+edit_uri: edit/master/docs/
+copyright: Django Q2 is a fork of Django Q, originally by Ilan Steemers.
+
+theme:
+  name: material
+  features:
+    - navigation.sections
+    - navigation.top
+    - navigation.tracking
+    - content.code.copy
+    - content.action.edit
+    - search.suggest
+    - search.highlight
+    - toc.follow
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/weather-night
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to light mode
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - footnotes
+  - tables
+  - toc:
+      permalink: true
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.inlinehilite
+  - pymdownx.highlight:
+      anchor_linenums: true
+
+nav:
+  - Home: index.md
+  - Installation: install.md
+  - Configuration: configure.md
+  - Brokers: brokers.md
+  - Tasks: tasks.md
+  - Groups: group.md
+  - Iterable: iterable.md
+  - Chains: chain.md
+  - Schedules: schedules.md
+  - Cluster: cluster.md
+  - Monitor: monitor.md
+  - Admin: admin.md
+  - Errors: errors.md
+  - Signals: signals.md
+  - Architecture: architecture.md
+  - Examples: examples.md

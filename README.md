@@ -131,11 +131,11 @@ Tested with:
 
 ## Brokers
 
-- [Redis](https://django-q2.readthedocs.org/en/latest/brokers.html#redis)
-- [IronMQ](https://django-q2.readthedocs.org/en/latest/brokers.html#ironmq)
-- [Amazon SQS](https://django-q2.readthedocs.org/en/latest/brokers.html#amazon-sqs)
-- [MongoDB](https://django-q2.readthedocs.org/en/latest/brokers.html#mongodb)
-- [Django ORM](https://django-q2.readthedocs.org/en/latest/brokers.html#django-orm)
+- [Redis](https://tinuvi.github.io/django-q2-full-of-juice/brokers/#redis)
+- [IronMQ](https://tinuvi.github.io/django-q2-full-of-juice/brokers/#ironmq)
+- [Amazon SQS](https://tinuvi.github.io/django-q2-full-of-juice/brokers/#amazon-sqs)
+- [MongoDB](https://tinuvi.github.io/django-q2-full-of-juice/brokers/#mongodb)
+- [Django ORM](https://tinuvi.github.io/django-q2-full-of-juice/brokers/#django-orm)
 
 ## Installation
 
@@ -160,9 +160,9 @@ Tested with:
   python manage.py migrate
   ```
 
-- Choose a message [broker](https://django-q2.readthedocs.org/en/latest/brokers.html), configure and install the appropriate client library.
+- Choose a message [broker](https://tinuvi.github.io/django-q2-full-of-juice/brokers/), configure and install the appropriate client library.
 
-Read the full documentation at [https://django-q2.readthedocs.org](https://django-q2.readthedocs.org)
+Read the full documentation at [https://tinuvi.github.io/django-q2-full-of-juice/](https://tinuvi.github.io/django-q2-full-of-juice/)
 
 ## Configuration
 
@@ -188,7 +188,7 @@ Q_CLUSTER = {
 }
 ```
 
-For full configuration options, see the [configuration documentation](https://django-q2.readthedocs.org/en/latest/configure.html).
+For full configuration options, see the [configuration documentation](https://tinuvi.github.io/django-q2-full-of-juice/configure/).
 
 ## Management Commands
 
@@ -249,7 +249,7 @@ def print_result(task):
     print(task.result)
 ```
 
-For more info see [Tasks](https://django-q2.readthedocs.org/en/latest/tasks.html)
+For more info see [Tasks](https://tinuvi.github.io/django-q2-full-of-juice/tasks/)
 
 ## Schedule
 
@@ -291,7 +291,7 @@ schedule('math.hypot',
          cron='0 22 * * 1-5')
 ```
 
-For more info check the [Schedules](https://django-q2.readthedocs.org/en/latest/schedules.html) documentation.
+For more info check the [Schedules](https://tinuvi.github.io/django-q2-full-of-juice/schedules/) documentation.
 
 ## Development
 
