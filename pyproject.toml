@@ -12,7 +12,7 @@ description = "A multiprocessing distributed task queue for Django"
 authors = ["Stan Triepels <django-q2@stantriepels.com>", "Ilan Steemers <koed00@gmail.com>"]
 maintainers = ["Willian Antunes <willianantunes@users.noreply.github.com>"]
 license = "MIT"
-readme = 'README.rst'
+readme = 'README.md'
 
 repository = "https://github.com/tinuvi/django-q2-full-of-juice"
 homepage = "https://github.com/tinuvi/django-q2-full-of-juice"
