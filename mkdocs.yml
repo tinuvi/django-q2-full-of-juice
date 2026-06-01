@@ -61,5 +61,6 @@ nav:
   - Admin: admin.md
   - Errors: errors.md
   - Signals: signals.md
+  - OpenTelemetry: opentelemetry.md
   - Architecture: architecture.md
   - Examples: examples.md

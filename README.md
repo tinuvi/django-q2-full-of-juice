@@ -1,6 +1,6 @@
 # A multiprocessing distributed task queue for Django
 
-[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=tinuvi_django-q2-full-of-juice&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=tinuvi_django-q2-full-of-juice) [![Coverage](https://sonarcloud.io/api/project_badges/measure?project=tinuvi_django-q2-full-of-juice&metric=coverage)](https://sonarcloud.io/summary/new_code?id=tinuvi_django-q2-full-of-juice)
+[![PyPI version](https://img.shields.io/pypi/v/django-q2-full-of-juice.svg)](https://pypi.org/project/django-q2-full-of-juice/) [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=tinuvi_django-q2-full-of-juice&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=tinuvi_django-q2-full-of-juice) [![Coverage](https://sonarcloud.io/api/project_badges/measure?project=tinuvi_django-q2-full-of-juice&metric=coverage)](https://sonarcloud.io/summary/new_code?id=tinuvi_django-q2-full-of-juice)
 
 Django Q2 is a fork of Django Q. Big thanks to Ilan Steemers for starting this project. Unfortunately, development has stalled since June 2021. Django Q2 is the new updated version of Django Q, with dependencies updates, docs updates and several bug fixes. Original repository: https://github.com/Koed00/django-q
 

@@ -1,6 +1,6 @@
 # Installation
 
-- Install the latest version with pip:
+- Install the latest version from [PyPI](https://pypi.org/project/django-q2-full-of-juice/) with pip:
 
     ```bash
     pip install django-q2-full-of-juice
