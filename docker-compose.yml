@@ -1,0 +1,16 @@
+# Local documentation preview.
+#
+# Serve the MkDocs Material site with live reload:
+#
+#     docker compose up --remove-orphans docs
+#
+# then open http://localhost:8000 (redirects to /django-q2-full-of-juice/, the
+# same base path the site is published under). Edits under docs/ reload automatically.
+services:
+  docs:
+    image: squidfunk/mkdocs-material:9
+    command: serve --dev-addr=0.0.0.0:8000
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/docs
