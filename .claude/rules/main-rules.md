@@ -46,8 +46,9 @@ Imperative guidance for working on the project. Follow these end-to-end on every
 ## Documentation
 
 - Update `CHANGELOG.md` only when `./django_q/` (the library source) changes, but not including the `tests` folder. Use the active `[X.Y.Z]` heading and `Added` / `Changed` / `Fixed` / `Removed` subsections. Skip it for repo-tooling or sample-project edits.
-- Update `README.rst` when public API, install steps, or supported Python/Django versions change.
-- Do **not** create new top-level docs (`*.md`) unless explicitly asked.
+- Update `README.md` when public API, install steps, or supported Python/Django versions change.
+- Review the docs site under `docs/` whenever you change public API, `Q_CLUSTER` settings, brokers, signals, management commands, or schedule types; update the matching `docs/*.md` page using the existing conventions (Material admonitions, reference tables, relative `page.md#anchor` links) and verify with `mkdocs build --strict`.
+- Do **not** create new repo-root docs (`*.md`) unless explicitly asked; documentation pages live under `docs/`.
 
 ## Commits
 
